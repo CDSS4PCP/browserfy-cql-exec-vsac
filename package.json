@@ -1,0 +1,41 @@
+{
+  "name": "browserfy-cql-exec-vsac",
+  "version": "2.2.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:cqframework/cql-exec-vsac.git"
+  },
+  "description": "Forked from cql-exec-vsac. The purpose is to enable valueset checks on the clientside and to allow for querying from custom VSAC servers.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec --recursive",
+    "test:watch": "npm test -- --watch",
+    "test:debug": "mocha --inspect --debug-brk --reporter spec --recursive",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prettier": "prettier --check \"**/*.js\"",
+    "prettier:fix": "prettier --write \"**/*.js\"",
+    "test:plus": "npm test && npm run lint && npm run prettier"
+  },
+  "dependencies": {
+    "debug": "^4.3.4",
+    "node-fetch": "^2.7.0",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "chai": "^4.4.1",
+    "chai-as-promised": "^7.1.1",
+    "cql-execution": "^3.0.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "mocha": "^10.4.0",
+    "nock": "^13.5.4",
+    "prettier": "^3.2.5",
+    "sinon": "^17.0.1",
+    "temp": "^0.9.4"
+  },
+  "peerDependencies": {
+    "cql-execution": ">=1.3.0 || ^3.0.0-beta"
+  }
+}
