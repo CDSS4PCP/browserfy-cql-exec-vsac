@@ -1,8 +1,6 @@
-const { Code, ValueSet } = require('cql-execution');
 const proc = require('process');
 const env = proc.env;
-const path = require('path');
-const debug = require('debug')('vsac'); // To turn on DEBUG: $ export DEBUG=vsac
+// const debug = require('debug')('vsac'); // To turn on DEBUG: $ export DEBUG=vsac
 const svs = require('./svs');
 const fhir = require('./fhir');
 
@@ -21,8 +19,8 @@ const VSAC_FHIR_URL_TEMPLATE = 'https://cts.nlm.nih.gov/fhir/ValueSet/{{oid}}/$e
  */
 class CodeService {
   constructor(useDefaultUrl = true, useFHIR = false, vsacSvsUrl = VSAC_SVS_URL_TEMPLATE, vsacFhirUrl = VSAC_FHIR_URL_TEMPLATE) {
-    this.api = useFHIR ? fhir : svs;
-
+    // this.api = useFHIR ? fhir : svs;
+    this.api = fhir;
     if (useDefaultUrl) {
       this.vsacAccess = useFHIR ? VSAC_FHIR_URL_TEMPLATE : VSAC_SVS_URL_TEMPLATE;
     } else {
@@ -33,7 +31,6 @@ class CodeService {
     // Initialize the local in-memory "database"
     this.valueSets = {}; // This will just be an object of objects.
   }
-
 
 
   /**
@@ -49,7 +46,7 @@ class CodeService {
     valueSetList = [],
     umlsAPIKey = env['UMLS_API_KEY'],
     // caching = true,
-    options = { svsCodeSystemType: 'url' }
+    options = {svsCodeSystemType: 'url'}
   ) {
 
     // First, filter out the value sets we already have
@@ -72,22 +69,22 @@ class CodeService {
         version = embeddedVersion;
       }
       if (this.valueSets[oid] == null || this.valueSets[oid][version] == null) {
-        oidsAndVersions.push({ oid, version });
+        oidsAndVersions.push({oid, version});
       }
     });
     if (oidsAndVersions.length) {
 
-      const promises = oidsAndVersions.map(({ oid, version }) => {
+      const promises = oidsAndVersions.map(({oid, version}) => {
         // Catch errors and convert to resolutions returning an error.  This ensures Promise.all waits for all promises.
         // See: http://stackoverflow.com/questions/31424561/wait-until-all-es6-promises-complete-even-rejected-promises
 
         return this.api
           .downloadValueSet(umlsAPIKey, oid, version, this.vsacAccess, this.valueSets, options)
           .catch(err => {
-            debug(
-              `Error downloading valueset ${oid}${version != null ? ` version ${version}` : ''}`,
-              err
-            );
+            // debug(
+            //   `Error downloading valueset ${oid}${version != null ? ` version ${version}` : ''}`,
+            //   err
+            // );
             return new Error(
               `Error downloading valueset: ${oid}${version != null ? ` version ${version}` : ''}`
             );
@@ -122,11 +119,12 @@ class CodeService {
     checkIncluded = true,
     umlsAPIKey = env['UMLS_API_KEY'],
     // caching = true,
-    options = { svsCodeSystemType: 'url' }
+    options = {svsCodeSystemType: 'url'}
   ) {
     const valueSets = extractSetOfValueSetsFromLibrary(library, checkIncluded);
 
-    return this.ensureValueSetsWithAPIKey(Array.from(valueSets)[0], umlsAPIKey, options);
+    console.log(`All valuesets:`, valueSets);
+    return this.ensureValueSetsWithAPIKey(Array.from(valueSets), umlsAPIKey, options);
   }
 
   /**
@@ -180,7 +178,7 @@ class CodeService {
     } else if (results.length === 1) {
       return results[0];
     } else {
-      return results.reduce(function(a, b) {
+      return results.reduce(function (a, b) {
         if (a.version > b.version) {
           return a;
         } else {
@@ -203,11 +201,27 @@ function extractSetOfValueSetsFromLibrary(
   extractFromIncluded = true,
   valueSets = new Set()
 ) {
-  if (library == null || library.valueSets == null) {
+  // Some JSON-ELM use the "valueSets" property, while others use the "valuesets" property
+  // First, check if library has "valueSets" property or  "valuesets" property
+  if (library.valueSets == null && library.valuesets == null) {
     return valueSets;
   }
-  // First add all the value sets from this library into the set
-  Object.values(library.valueSets).forEach(vs => valueSets.add(vs));
+
+  // Extract the arrays of the "valueSets" property and "valuesets" property
+  let valueSetsInLibrary = library.valueSets ? Object.values(library.valueSets)[0] : [];
+  let valuesetsInLibrary = library.valuesets ? Object.values(library.valuesets)[0] : [];
+
+  // Add all the value sets from this library into the set
+  valueSetsInLibrary.forEach(vs => {
+    console.log(`Found valueset ${JSON.stringify(vs)}`);
+    valueSets.add(vs);
+  });
+  valuesetsInLibrary.forEach(vs => {
+    console.log(`Found valueset ${JSON.stringify(vs)}`);
+
+    valueSets.add(vs);
+  });
+
   // Then, if requested, loop through the included libraries and add value sets from each of them
   if (extractFromIncluded && library.includes) {
     Object.values(library.includes).forEach(included =>
@@ -240,4 +254,4 @@ function extractOidAndVersion(id) {
   return [id];
 }
 
-module.exports = { CodeService };
+module.exports = {CodeService};

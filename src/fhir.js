@@ -1,6 +1,5 @@
-const path = require('path');
 const fetch = require('node-fetch');
-const debug = require('debug')('vsac'); // To turn on DEBUG: $ export DEBUG=vsac
+// const debug = require('debug')('vsac'); // To turn on DEBUG: $ export DEBUG=vsac
 const { Code, ValueSet } = require('cql-execution');
 
 /**
@@ -80,9 +79,9 @@ async function getValueSetPages(apiKey, oid, version, vsacUrl, offset = 0) {
  * @throws {Error} If the response status is not ok.
  */
 async function getValueSet(apiKey, oid, version, vsacAccess, offset = 0) {
-  debug(
-    `Getting ValueSet: ${oid}${version != null ? ` version ${version}` : ''} (offset: ${offset})`
-  );
+  // debug(
+  //   `Getting ValueSet: ${oid}${version != null ? ` version ${version}` : ''} (offset: ${offset})`
+  // );
 
   if (typeof vsacAccess === 'string') {
     return await fetchValueSet(apiKey, oid, version, vsacAccess, offset);
@@ -107,9 +106,10 @@ async function fetchValueSet(apiKey, oid, version, vsacUrl, offset = 0) {
   }
 
   const url = `${vsacUrl.replace('{{oid}}', oid)}?${params}`;
-  debug(`Built Url ${url}`);
+  console.log(`Built Url ${url}`);
 
   const response = await fetch(url, options);
+  console.log(`Response for ${url} is ${response.status}`);
   if (!response.ok) {
     throw new Error(response.status);
   }

@@ -1,7 +1,6 @@
-const path = require('path');
 const fetch = require('node-fetch');
 const parseString = require('xml2js').parseString;
-const debug = require('debug')('vsac'); // To turn on DEBUG: $ export DEBUG=vsac
+// const debug = require('debug')('vsac'); // To turn on DEBUG: $ export DEBUG=vsac
 const { Code, ValueSet } = require('cql-execution');
 const vsacCS = require('./vsac-code-systems');
 
@@ -25,7 +24,7 @@ async function downloadValueSet(
   vsDB = {},
   options = { svsCodeSystemType: 'url' }
 ) {
-  debug(`Getting ValueSet: ${oid}${version != null ? ` version ${version}` : ''}`);
+  // debug(`Getting ValueSet: ${oid}${version != null ? ` version ${version}` : ''}`);
 
   let data;
   if (typeof vsacAccess === 'string') {
@@ -52,7 +51,7 @@ async function fetchValueSet(apiKey, oid, version, vsacUrl) {
   };
 
   const url = `${vsacUrl}?${params}`;
-  debug(`Built Url ${url}`);
+  // debug(`Built Url ${url}`);
 
   const response = await fetch(
     url,
