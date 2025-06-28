@@ -27,7 +27,6 @@ class CodeService {
       this.vsacAccess = useFHIR ? vsacFhirUrl : vsacSvsUrl;
 
     }
-
     // Initialize the local in-memory "database"
     this.valueSets = {}; // This will just be an object of objects.
   }
@@ -72,6 +71,7 @@ class CodeService {
         oidsAndVersions.push({oid, version});
       }
     });
+
     if (oidsAndVersions.length) {
 
       const promises = oidsAndVersions.map(({oid, version}) => {
@@ -123,9 +123,9 @@ class CodeService {
   ) {
     const valueSets = extractSetOfValueSetsFromLibrary(library, checkIncluded);
 
-    console.log(`All valuesets:`, valueSets);
     return this.ensureValueSetsWithAPIKey(Array.from(valueSets), umlsAPIKey, options);
   }
+
 
   /**
    * The findValueSetsByOid function is kept for backwards compatibility (and since cql-execution
@@ -187,6 +187,23 @@ class CodeService {
       });
     }
   }
+
+  expandValueSet(oid, version) {
+    const results = [];
+    const valueSet = this.findValueSet(oid, version);
+    if (valueSet == null) {
+      return [];
+    }
+    valueSet.codes.forEach(code => {
+      if (!results.find(result => {
+        result === code;
+      })) {
+        results.push(code);
+
+      }
+    });
+    return results;
+  }
 }
 
 /**
@@ -201,6 +218,7 @@ function extractSetOfValueSetsFromLibrary(
   extractFromIncluded = true,
   valueSets = new Set()
 ) {
+
   // Some JSON-ELM use the "valueSets" property, while others use the "valuesets" property
   // First, check if library has "valueSets" property or  "valuesets" property
   if (library.valueSets == null && library.valuesets == null) {
@@ -208,19 +226,43 @@ function extractSetOfValueSetsFromLibrary(
   }
 
   // Extract the arrays of the "valueSets" property and "valuesets" property
-  let valueSetsInLibrary = library.valueSets ? Object.values(library.valueSets)[0] : [];
-  let valuesetsInLibrary = library.valuesets ? Object.values(library.valuesets)[0] : [];
+  // let valueSetsInLibrary = library.valueSets ? (Object.values(library.valueSets) ? Object.values(library.valueSets) : []) : [];
+  // let valuesetsInLibrary = library.valuesets ? (Object.values(library.valuesets) ? Object.values(library.valuesets) : []) : [];
+  let valueSetsInLibrary = [];
+  let valuesetsInLibrary = [];
+  if (library.valueSets != null && library.valueSets != undefined) {
+    valueSetsInLibrary = Object.values(library.valueSets);
+  } else {
+    valueSetsInLibrary = [];
+  }
+
+  if (library.valuesets != null && library.valuesets != undefined) {
+    valuesetsInLibrary = Object.values(library.valuesets);
+  } else {
+    valuesetsInLibrary = [];
+  }
+
 
   // Add all the value sets from this library into the set
-  valueSetsInLibrary.forEach(vs => {
-    console.log(`Found valueset ${JSON.stringify(vs)}`);
-    valueSets.add(vs);
-  });
-  valuesetsInLibrary.forEach(vs => {
-    console.log(`Found valueset ${JSON.stringify(vs)}`);
+  if (valueSetsInLibrary != null)
 
-    valueSets.add(vs);
-  });
+    valueSetsInLibrary.forEach(vs => {
+      valueSets.add(vs);
+    });
+
+  if (valuesetsInLibrary != null) {
+
+    if (Array.isArray(valuesetsInLibrary))
+      valuesetsInLibrary.forEach(vs => {
+        valueSets.add(vs);
+      });
+    else {
+      Object.values(valuesetsInLibrary).forEach(vs => {
+        valueSets.add(vs);
+
+      });
+    }
+  }
 
   // Then, if requested, loop through the included libraries and add value sets from each of them
   if (extractFromIncluded && library.includes) {
@@ -228,6 +270,7 @@ function extractSetOfValueSetsFromLibrary(
       extractSetOfValueSetsFromLibrary(included, extractFromIncluded, valueSets)
     );
   }
+
   return valueSets;
 }
 
